@@ -6,4 +6,4 @@ set(CMAKE_CXX_STANDARD 14)
 add_executable(Graph
         main.cpp
         Graph.h
-        Node.h)
+)
