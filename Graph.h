@@ -2,6 +2,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector> // Added for vector<vector<int>>
+#include <queue> // Added for BFS algorithm
+#include <stack> // Added for DFS algorithm
+#include <cstddef> // Added for size_t
 
 using namespace std;
 
@@ -67,6 +71,225 @@ public:
     // --- OPERATOR OVERLOAD ---
     template <typename U>
     friend ostream& operator<<(ostream& os, const Graph<U>& graph);
+
+    /**
+     * Método que carga las aristas de un grafo y las almacena en una matriz de adyacencia y en una lista de adyacencia (objeto Graph).
+     * Parámetros:
+     *  - n: cantidad de vértices
+     *  - m: cantidad de aristas
+     *  - matrizAdj: referencia a matriz de adyacencia (vector<vector<int>>)
+     *  - listaAdj: referencia a objeto Graph<int> (lista de adyacencia)
+     * Precondición:
+     *  n y m > 0.
+     *  Se lee m veces dos enteros u, v (arista entre u y v, 0-indexados)
+     */
+    void loadGraph(int n, int m, vector<vector<int>>& matrizAdj, Graph<int>& listaAdj) {
+        // Inicializa los vértices del grafo a partir del 0 - n-1.
+        for (int i = 0; i < n; i++){
+            listaAdj.addVertex(i);
+        }    
+        
+        // Inicializa la matriz de adyacencia:
+        matrizAdj.assign(n, vector<int>(n, 0));
+
+        // Solicita al usuario relacionar los vértices que se generearon en el grafo.
+        cout << "Ingrese " << m << " aristas, cada una como dos enteros (u v) separados por espacio (0-indexados):\n";
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            // Agregar a la matriz de adyacencia
+            matrizAdj[u][v] = 1;
+            matrizAdj[v][u] = 1; // grafo no dirigido
+            // Agregar a la lista de adyacencia
+            listaAdj.addEdge(u, v);
+        }
+    }
+
+    /**
+     * Método sobrecargado que carga las aristas de un grafo y las almacena en una matriz de adyacencia genérica
+     * y en una lista de adyacencia (objeto Graph).
+     * Parámetros:
+     *  - n: cantidad de vértices
+     *  - m: cantidad de aristas
+     *  - matrizAdj: referencia a matriz de adyacencia genérica (unordered_map<T, unordered_map<T, bool>>)
+     *  - listaAdj: referencia a objeto Graph<T> (lista de adyacencia)
+     * Precondición:
+     *  n y m > 0.
+     *  Se lee m veces dos enteros u, v (arista entre u y v, 0-indexados)
+     */
+    template<typename U>
+    void loadGraph(int n, int m, unordered_map<U, unordered_map<U, bool>>& matrizAdj, Graph<U>& listaAdj) {
+        // Inicializa los vértices del grafo a partir del 0 - n-1.
+        for (int i = 0; i < n; i++){
+            U vertice = static_cast<U>(i);  // Convertir int a tipo U
+            listaAdj.addVertex(vertice);
+            // Inicializar la fila en la matriz para este vértice
+            matrizAdj[vertice] = unordered_map<U, bool>();
+        }
+        
+        // Solicita al usuario relacionar los vértices que se generaron en el grafo.
+        cout << "Ingrese " << m << " aristas, cada una como dos enteros (u v) separados por espacio (0-indexados):\n";
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            U verticeU = static_cast<U>(u);
+            U verticeV = static_cast<U>(v);
+            
+            // Agregar a la matriz de adyacencia genérica
+            matrizAdj[verticeU][verticeV] = true;
+            matrizAdj[verticeV][verticeU] = true; // grafo no dirigido
+            
+            // Agregar a la lista de adyacencia
+            listaAdj.addEdge(verticeU, verticeV);
+        }
+    }
+
+
+    void BFS(vector<vector<int>>& matrizAdj, int nodoInicial) {
+        int n = matrizAdj.size();
+        vector<bool> visitados(n, false);
+        queue<int> cola;
+        
+        if (nodoInicial < 0 || nodoInicial >= n) {
+            cout << "Error: El nodo inicial " << nodoInicial << " no es válido." << endl;
+            return;
+        }
+        
+        visitados[nodoInicial] = true;
+        cola.push(nodoInicial);
+        cout << "Recorrido BFS desde el nodo " << nodoInicial << ": ";
+        
+        while (!cola.empty()) {
+            int nodoActual = cola.front();
+            cola.pop();
+            cout << nodoActual;
+            
+            for (int vecino = 0; vecino < n; vecino++) {
+                if (matrizAdj[nodoActual][vecino] == 1 && !visitados[vecino]) {
+                    visitados[vecino] = true;
+                    cola.push(vecino);
+                }
+            }
+            
+            if (!cola.empty()) {
+                cout << " ";
+            }
+        }
+        cout << endl;
+    }
+
+
+    void DFS(const vector<vector<int>>& matrizAdj, int nodoInicial) {
+        int n = matrizAdj.size();
+        vector<bool> visitados(n, false);
+        stack<int> pila;
+        
+        if (nodoInicial < 0 || nodoInicial >= n) {
+            cout << "Error: El nodo inicial " << nodoInicial << " no es válido." << endl;
+            return;
+        }
+        
+        cout << "Recorrido DFS desde el nodo " << nodoInicial << ": ";
+        pila.push(nodoInicial);
+        bool esPrimerNodo = true;
+        
+        while (!pila.empty()) {
+            int nodoActual = pila.top();
+            pila.pop();
+            
+            if (!visitados[nodoActual]) {
+                visitados[nodoActual] = true;
+                
+                if (!esPrimerNodo) {
+                    cout << " ";
+                }
+                esPrimerNodo = false;
+                cout << nodoActual;
+                
+                for (int vecino = n - 1; vecino >= 0; vecino--) {
+                    if (matrizAdj[nodoActual][vecino] == 1 && !visitados[vecino]) {
+                        pila.push(vecino);
+                    }
+                }
+            }
+        }
+        cout << endl;
+    }
+
+
+
+    void bfs(const T& startNode) {
+        if (!adjList.contains(startNode)) {
+            cout << "Error: Start node not found in graph." << endl;
+            return;
+        }
+
+        // 1. Initialize a Queue for nodes to visit and a Set for visited nodes
+        queue<T> Q;
+        unordered_set<T> visited;
+
+        // 2. Start at the node passed in
+        Q.push(startNode);
+        visited.insert(startNode);
+
+        cout << "Recorrido bfs desde el nodo " << startNode << ": ";
+
+        while (!Q.empty()) {
+            // 3. Dequeue the current node (FIFO)
+            T current = Q.front();
+            Q.pop();
+
+            // 4. Print current node
+            cout << current << " ";
+
+            // 5. Look at all neighbors of the current node
+            for (const T& neighbor : adjList.at(current)) {
+                // 6. If the neighbor hasn't been visited, mark it and enqueue it
+                if (!visited.contains(neighbor)) {
+                    visited.insert(neighbor);
+                    Q.push(neighbor);
+                }
+            }
+        }
+        cout << endl;
+    }
+
+
+    void dfs(const T& startNode) const {
+        if (!adjList.contains(startNode)) {
+            cout << "Error: Start node not found in graph." << endl;
+            return;
+        }
+
+        // 1. Initialize a Stack for nodes to visit and a Set for visited nodes
+        stack<T> S;
+        unordered_set<T> visited;
+
+        // 2. Start at the node passed as parameter
+        S.push(startNode);
+        visited.insert(startNode);
+
+        cout << "Recorrido dfs desde el nodo " << startNode << ": ";
+
+        while (!S.empty()) {
+            // 3. Pop the current node (LIFO)
+            T current = S.top();
+            S.pop();
+
+            // 4. Process the current node (in this case, print it)
+            cout << current << " ";
+
+            // 5. Look at all neighbors of the current node
+            for (const T& neighbor : adjList.at(current)) {
+                // 6. If the neighbor hasn't been visited, mark it and push it
+                if (!visited.contains(neighbor)) {
+                    visited.insert(neighbor);
+                    S.push(neighbor);
+                }
+            }
+        }
+        cout << endl;
+    }
 };
 
 // --- OPERATOR OVERLOAD IMPLEMENTATION ---
