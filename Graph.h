@@ -55,7 +55,7 @@ public:
 
     // Remove vertex. Removes an existing vertex and its associated edges from the graph
     // List O(n)
-    bool removeVertex(T vertex){
+    bool removeVertex(T vertex) {
         if (!adjList.contains(vertex)) return false;
 
         // Iterate through the set of connections of the vertex we want to remove
@@ -68,10 +68,7 @@ public:
         return true;
     }
 
-    // --- TRAVERSAL METHODS ---
-
-    // Breadth First Search (BFS)
-    // Level by Level
+    /*Métodos para la lista de adyacencia*/
     void bfs(const T& startNode) {
         if (!adjList.contains(startNode)) {
             cout << "Error: Start node not found in graph." << endl;
@@ -108,9 +105,7 @@ public:
         cout << endl;
     }
 
-    // Depth-First Search (DFS)
-    // Complete paths
-    void dfs(const T& startNode) const {
+    void dfs(const T& startNode) {
         if (!adjList.contains(startNode)) {
             cout << "Error: Start node not found in graph." << endl;
             return;
@@ -146,82 +141,28 @@ public:
         cout << endl;
     }
 
-    // --- OPERATOR OVERLOAD ---
-    template <typename U>
-    friend ostream& operator<<(ostream& os, const Graph<U>& graph);
-
-    /**
-     * Método que carga las aristas de un grafo y las almacena en una matriz de adyacencia y en una lista de adyacencia (objeto Graph).
-     * Parámetros:
-     *  - n: cantidad de vértices
-     *  - m: cantidad de aristas
-     *  - matrizAdj: referencia a matriz de adyacencia (vector<vector<int>>)
-     *  - listaAdj: referencia a objeto Graph<int> (lista de adyacencia)
-     * Precondición:
-     *  n y m > 0.
-     *  Se lee m veces dos enteros u, v (arista entre u y v, 0-indexados)
-     */
-    void loadGraph(int n, int m, vector<vector<int>>& matrizAdj, Graph<int>& listaAdj) {
-        // Inicializa los vértices del grafo a partir del 0 - n-1.
-        for (int i = 0; i < n; i++){
-            listaAdj.addVertex(i);
-        }    
-        
-        // Inicializa la matriz de adyacencia:
+    void loadGraph(int n, int m, vector<vector<int>>& matrizAdj) {
         matrizAdj.assign(n, vector<int>(n, 0));
 
-        // Solicita al usuario relacionar los vértices que se generearon en el grafo.
+        for (int i = 0; i < n; ++i) {
+            addVertex(static_cast<T>(i));
+        }
+
         cout << "Ingrese " << m << " aristas, cada una como dos enteros (u v) separados por espacio (0-indexados):\n";
         for (int i = 0; i < m; ++i) {
             int u, v;
             cin >> u >> v;
-            // Agregar a la matriz de adyacencia
+
+            if (u < 0 || u >= n || v < 0 || v >= n) {
+                cout << "Error: arista inválida (" << u << " " << v << ") ignorada." << endl;
+                continue;
+            }
+
             matrizAdj[u][v] = 1;
-            matrizAdj[v][u] = 1; // grafo no dirigido
-            // Agregar a la lista de adyacencia
-            listaAdj.addEdge(u, v);
+            matrizAdj[v][u] = 1;
+            addEdge(static_cast<T>(u), static_cast<T>(v));
         }
     }
-
-    /**
-     * Método sobrecargado que carga las aristas de un grafo y las almacena en una matriz de adyacencia genérica
-     * y en una lista de adyacencia (objeto Graph).
-     * Parámetros:
-     *  - n: cantidad de vértices
-     *  - m: cantidad de aristas
-     *  - matrizAdj: referencia a matriz de adyacencia genérica (unordered_map<T, unordered_map<T, bool>>)
-     *  - listaAdj: referencia a objeto Graph<T> (lista de adyacencia)
-     * Precondición:
-     *  n y m > 0.
-     *  Se lee m veces dos enteros u, v (arista entre u y v, 0-indexados)
-     */
-    template<typename U>
-    void loadGraph(int n, int m, unordered_map<U, unordered_map<U, bool>>& matrizAdj, Graph<U>& listaAdj) {
-        // Inicializa los vértices del grafo a partir del 0 - n-1.
-        for (int i = 0; i < n; i++){
-            U vertice = static_cast<U>(i);  // Convertir int a tipo U
-            listaAdj.addVertex(vertice);
-            // Inicializar la fila en la matriz para este vértice
-            matrizAdj[vertice] = unordered_map<U, bool>();
-        }
-        
-        // Solicita al usuario relacionar los vértices que se generaron en el grafo.
-        cout << "Ingrese " << m << " aristas, cada una como dos enteros (u v) separados por espacio (0-indexados):\n";
-        for (int i = 0; i < m; ++i) {
-            int u, v;
-            cin >> u >> v;
-            U verticeU = static_cast<U>(u);
-            U verticeV = static_cast<U>(v);
-            
-            // Agregar a la matriz de adyacencia genérica
-            matrizAdj[verticeU][verticeV] = true;
-            matrizAdj[verticeV][verticeU] = true; // grafo no dirigido
-            
-            // Agregar a la lista de adyacencia
-            listaAdj.addEdge(verticeU, verticeV);
-        }
-    }
-
 
     void BFS(vector<vector<int>>& matrizAdj, int nodoInicial) {
         int n = matrizAdj.size();
@@ -293,81 +234,12 @@ public:
         }
         cout << endl;
     }
+    
+       
 
-
-
-    void bfs(const T& startNode) {
-        if (!adjList.contains(startNode)) {
-            cout << "Error: Start node not found in graph." << endl;
-            return;
-        }
-
-        // 1. Initialize a Queue for nodes to visit and a Set for visited nodes
-        queue<T> Q;
-        unordered_set<T> visited;
-
-        // 2. Start at the node passed in
-        Q.push(startNode);
-        visited.insert(startNode);
-
-        cout << "Recorrido bfs desde el nodo " << startNode << ": ";
-
-        while (!Q.empty()) {
-            // 3. Dequeue the current node (FIFO)
-            T current = Q.front();
-            Q.pop();
-
-            // 4. Print current node
-            cout << current << " ";
-
-            // 5. Look at all neighbors of the current node
-            for (const T& neighbor : adjList.at(current)) {
-                // 6. If the neighbor hasn't been visited, mark it and enqueue it
-                if (!visited.contains(neighbor)) {
-                    visited.insert(neighbor);
-                    Q.push(neighbor);
-                }
-            }
-        }
-        cout << endl;
-    }
-
-
-    void dfs(const T& startNode) const {
-        if (!adjList.contains(startNode)) {
-            cout << "Error: Start node not found in graph." << endl;
-            return;
-        }
-
-        // 1. Initialize a Stack for nodes to visit and a Set for visited nodes
-        stack<T> S;
-        unordered_set<T> visited;
-
-        // 2. Start at the node passed as parameter
-        S.push(startNode);
-        visited.insert(startNode);
-
-        cout << "Recorrido dfs desde el nodo " << startNode << ": ";
-
-        while (!S.empty()) {
-            // 3. Pop the current node (LIFO)
-            T current = S.top();
-            S.pop();
-
-            // 4. Process the current node (in this case, print it)
-            cout << current << " ";
-
-            // 5. Look at all neighbors of the current node
-            for (const T& neighbor : adjList.at(current)) {
-                // 6. If the neighbor hasn't been visited, mark it and push it
-                if (!visited.contains(neighbor)) {
-                    visited.insert(neighbor);
-                    S.push(neighbor);
-                }
-            }
-        }
-        cout << endl;
-    }
+    // --- OPERATOR OVERLOAD ---
+    template <typename U>
+    friend ostream& operator<<(ostream& os, const Graph<U>& graph);
 };
 
 // --- OPERATOR OVERLOAD IMPLEMENTATION ---

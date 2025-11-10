@@ -16,7 +16,7 @@ int main() {
 
     // Cargar el grafo (esto solicita al usuario los m pares de nodos)
     // Puedes llamar al método como es ahora no siendo estático:
-    listaAdj.loadGraph(n, m, matrizAdj, listaAdj);
+    listaAdj.loadGraph(n, m, matrizAdj);
 
     // Mostrar la matriz de adyacencia
     cout << "Matriz de adyacencia:" << endl;
@@ -43,6 +43,7 @@ int main() {
     cout << "Lista de adyacencia:" << endl;
     listaAdj.dfs(nodoInicial);
     listaAdj.bfs(nodoInicial);
+
 
     return 0;
 }
