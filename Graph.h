@@ -64,6 +64,84 @@ public:
         return true;
     }
 
+    // --- TRAVERSAL METHODS ---
+
+    // Breadth First Search (BFS)
+    // Level by Level
+    void bfs(const T& startNode) {
+        if (!adjList.contains(startNode)) {
+            cout << "Error: Start node not found in graph." << endl;
+            return;
+        }
+
+        // 1. Initialize a Queue for nodes to visit and a Set for visited nodes
+        queue<T> Q;
+        unordered_set<T> visited;
+
+        // 2. Start at the node passed in
+        Q.push(startNode);
+        visited.insert(startNode);
+
+        cout << "BFS Traversal starting from " << startNode << ": ";
+
+        while (!Q.empty()) {
+            // 3. Dequeue the current node (FIFO)
+            T current = Q.front();
+            Q.pop();
+
+            // 4. Print current node
+            cout << current << " ";
+
+            // 5. Look at all neighbors of the current node
+            for (const T& neighbor : adjList.at(current)) {
+                // 6. If the neighbor hasn't been visited, mark it and enqueue it
+                if (!visited.contains(neighbor)) {
+                    visited.insert(neighbor);
+                    Q.push(neighbor);
+                }
+            }
+        }
+        cout << endl;
+    }
+
+    // Depth-First Search (DFS)
+    // Complete paths
+    void dfs(const T& startNode) const {
+        if (!adjList.contains(startNode)) {
+            cout << "Error: Start node not found in graph." << endl;
+            return;
+        }
+
+        // 1. Initialize a Stack for nodes to visit and a Set for visited nodes
+        stack<T> S;
+        unordered_set<T> visited;
+
+        // 2. Start at the node passed as parameter
+        S.push(startNode);
+        visited.insert(startNode);
+
+        cout << "DFS Traversal starting from " << startNode << ": ";
+
+        while (!S.empty()) {
+            // 3. Pop the current node (LIFO)
+            T current = S.top();
+            S.pop();
+
+            // 4. Process the current node (in this case, print it)
+            cout << current << " ";
+
+            // 5. Look at all neighbors of the current node
+            for (const T& neighbor : adjList.at(current)) {
+                // 6. If the neighbor hasn't been visited, mark it and push it
+                if (!visited.contains(neighbor)) {
+                    visited.insert(neighbor);
+                    S.push(neighbor);
+                }
+            }
+        }
+        cout << endl;
+    }
+
     // --- OPERATOR OVERLOAD ---
     template <typename U>
     friend ostream& operator<<(ostream& os, const Graph<U>& graph);
