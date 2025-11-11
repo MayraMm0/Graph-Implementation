@@ -12,7 +12,14 @@ using namespace std;
 template <typename T>
 class Graph{
 private:
+    // Adjacency list representation
     unordered_map<T, unordered_set<T>> adjList;
+
+    //Auxiliary structures for Matrix indexing
+    // Maps T type to a fixed int index (id)
+    unordered_map<T, int> vertexToId;
+    // Maps int index back to T type
+    vector<T> idToVertex;
 
 public:
     // --- CONSTRUCTOR ---
@@ -20,10 +27,14 @@ public:
 
     // --- INSERTION METHODS ---
     // Add vertex. This method adds a vertex to the graph, with no connections.
-    // List O(1).
+    // It also assigns it an id for matrix use
     bool addVertex(T vertex){
         if(!adjList.contains(vertex)){ // Avoids duplicate elements
             adjList[vertex];
+
+            int newId = idToVertex.size();
+            vertexToId[vertex] = newId;
+            idToVertex.push_back(vertex);
             return true;
         }
 
@@ -31,7 +42,6 @@ public:
     }
 
     // Add edge. This method creates a connection between two existing vertices.
-    //List O(1).
     bool addEdge(T vertex1, T vertex2) {
         if (adjList.contains(vertex1) && adjList.contains(vertex2)) {
             adjList.at(vertex1).insert(vertex2); // Adds vertex 2 to the set of connections of vertex 1
@@ -64,11 +74,14 @@ public:
             adjList[otherVertex].erase(vertex);
         }
 
-        adjList.erase(vertex); // Removes it from list
+        adjList.erase(vertex); // Removes it from list only
         return true;
     }
 
-    /*Métodos para la lista de adyacencia*/
+    // --- TRAVERSAL METHODS ---
+    // Breadth First Search (Level by Level)
+
+    // Adjacency List bfs O(V+E)
     void bfs(const T& startNode) {
         if (!adjList.contains(startNode)) {
             cout << "Error: Start node not found in graph." << endl;
@@ -83,7 +96,7 @@ public:
         Q.push(startNode);
         visited.insert(startNode);
 
-        cout << "BFS Traversal starting from " << startNode << ": ";
+        cout << "BFS list traversal starting from " << startNode << ": ";
 
         while (!Q.empty()) {
             // 3. Dequeue the current node (FIFO)
@@ -105,6 +118,43 @@ public:
         cout << endl;
     }
 
+    // Adjacency Matrix bfs O(V^2)
+    void bfs_matrix(const vector<vector<int>>& matrizAdj, int startId) {
+        int n = matrizAdj.size();
+        vector<bool> visitados(n, false);
+        queue<int> cola;
+
+        if (startId < 0 || startId >= n) {
+            cout << "Error: El nodo inicial " << startId << " no es válido." << endl;
+            return;
+        }
+
+        visitados[startId] = true;
+        cola.push(startId);
+        cout << "Recorrido BFS desde el nodo " << idToVertex.at(startId) << ": ";
+
+        while (!cola.empty()) {
+            int currentId = cola.front();
+            cola.pop();
+            cout << idToVertex.at(currentId) << " ";
+
+            for (int vecino = 0; vecino < n; vecino++) {
+                if (matrizAdj[currentId][vecino] == 1 && !visitados[vecino]) {
+                    visitados[vecino] = true;
+                    cola.push(vecino);
+                }
+            }
+
+            if (!cola.empty()) {
+                cout << " ";
+            }
+        }
+        cout << endl;
+    }
+
+    // Depth-First Search (Complete paths)
+
+    // Adjacency List dfs O(V+E)
     void dfs(const T& startNode) {
         if (!adjList.contains(startNode)) {
             cout << "Error: Start node not found in graph." << endl;
@@ -119,7 +169,7 @@ public:
         S.push(startNode);
         visited.insert(startNode);
 
-        cout << "DFS Traversal starting from " << startNode << ": ";
+        cout << "DFS list traversal starting from " << startNode << ": ";
 
         while (!S.empty()) {
             // 3. Pop the current node (LIFO)
@@ -141,92 +191,36 @@ public:
         cout << endl;
     }
 
-    void loadGraph(int n, int m, vector<vector<int>>& matrizAdj) {
-        matrizAdj.assign(n, vector<int>(n, 0));
-
-        for (int i = 0; i < n; ++i) {
-            addVertex(static_cast<T>(i));
-        }
-
-        cout << "Ingrese " << m << " aristas, cada una como dos enteros (u v) separados por espacio (0-indexados):\n";
-        for (int i = 0; i < m; ++i) {
-            int u, v;
-            cin >> u >> v;
-
-            if (u < 0 || u >= n || v < 0 || v >= n) {
-                cout << "Error: arista inválida (" << u << " " << v << ") ignorada." << endl;
-                continue;
-            }
-
-            matrizAdj[u][v] = 1;
-            matrizAdj[v][u] = 1;
-            addEdge(static_cast<T>(u), static_cast<T>(v));
-        }
-    }
-
-    void BFS(vector<vector<int>>& matrizAdj, int nodoInicial) {
-        int n = matrizAdj.size();
-        vector<bool> visitados(n, false);
-        queue<int> cola;
-        
-        if (nodoInicial < 0 || nodoInicial >= n) {
-            cout << "Error: El nodo inicial " << nodoInicial << " no es válido." << endl;
-            return;
-        }
-        
-        visitados[nodoInicial] = true;
-        cola.push(nodoInicial);
-        cout << "Recorrido BFS desde el nodo " << nodoInicial << ": ";
-        
-        while (!cola.empty()) {
-            int nodoActual = cola.front();
-            cola.pop();
-            cout << nodoActual;
-            
-            for (int vecino = 0; vecino < n; vecino++) {
-                if (matrizAdj[nodoActual][vecino] == 1 && !visitados[vecino]) {
-                    visitados[vecino] = true;
-                    cola.push(vecino);
-                }
-            }
-            
-            if (!cola.empty()) {
-                cout << " ";
-            }
-        }
-        cout << endl;
-    }
-
-
-    void DFS(const vector<vector<int>>& matrizAdj, int nodoInicial) {
+    // Adjacency Matrix dfs O(V^2)
+    void dfs_matrix(const vector<vector<int>>& matrizAdj, int startId) {
         int n = matrizAdj.size();
         vector<bool> visitados(n, false);
         stack<int> pila;
-        
-        if (nodoInicial < 0 || nodoInicial >= n) {
-            cout << "Error: El nodo inicial " << nodoInicial << " no es válido." << endl;
+
+        if (startId < 0 || startId >= n) {
+            cout << "Error: El nodo inicial " << startId << " no es válido." << endl;
             return;
         }
-        
-        cout << "Recorrido DFS desde el nodo " << nodoInicial << ": ";
-        pila.push(nodoInicial);
+
+        cout << "Recorrido DFS desde el nodo " << startId << ": ";
+        pila.push(startId);
         bool esPrimerNodo = true;
-        
+
         while (!pila.empty()) {
-            int nodoActual = pila.top();
+            int currentId = pila.top();
             pila.pop();
-            
-            if (!visitados[nodoActual]) {
-                visitados[nodoActual] = true;
-                
+
+            if (!visitados[currentId]) {
+                visitados[currentId] = true;
+
                 if (!esPrimerNodo) {
                     cout << " ";
                 }
                 esPrimerNodo = false;
-                cout << nodoActual;
-                
+                cout << idToVertex.at(currentId) << " ";
+
                 for (int vecino = n - 1; vecino >= 0; vecino--) {
-                    if (matrizAdj[nodoActual][vecino] == 1 && !visitados[vecino]) {
+                    if (matrizAdj[currentId][vecino] == 1 && !visitados[vecino]) {
                         pila.push(vecino);
                     }
                 }
@@ -234,8 +228,47 @@ public:
         }
         cout << endl;
     }
-    
-       
+
+    // --- LOAD METHOD ---
+    // Loads the graph edges into the Adjacency Matrix (external ref)
+    // and the Adjacency List (internal member).
+    // Input: n (number of vertices), m (number of edges), matrizAdj (matrix by ref)
+    void loadGraph(int n, int m, vector<vector<int>>& matrizAdj) {
+        // Clear previous data
+        adjList.clear();
+        idToVertex.clear();
+        vertexToId.clear();
+
+        // 1. Initialize external Adj Matrix
+        matrizAdj.assign(n, vector<int>(n, 0));
+
+        for (int i = 0; i < n; ++i) {
+            addVertex(static_cast<T>(i)); // This also updates the internal ID maps
+        }
+
+        cout << "Ingrese " << m << " aristas, cada una como dos enteros (u v) separados por espacio (0-indexados):\n";
+        for (int i = 0; i < m; ++i) {
+            int u_id, v_id;
+            cin >> u_id >> v_id;
+
+            if (u_id < 0 || u_id >= n || v_id < 0 || v_id >= n) {
+                cout << "Error: arista inválida (" << u_id << " " << v_id << ") ignorada." << endl;
+                continue;
+            }
+
+            // Get T values corresponding to the read IDs
+            T u_vertex = idToVertex.at(u_id);
+            T v_vertex = idToVertex.at(v_id);
+
+            // Update Adj Matrix (external)
+            matrizAdj[u_id][v_id] = 1;
+            matrizAdj[v_id][u_id] = 1;
+
+            // Update adj list (internal)
+            addEdge(u_vertex, v_vertex);
+        }
+    }
+
 
     // --- OPERATOR OVERLOAD ---
     template <typename U>

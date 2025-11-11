@@ -11,11 +11,10 @@ int main() {
     cout << "Introduce el numero de aristas (m): ";
     cin >> m;
 
-    vector<vector<int>> matrizAdj;      // Matriz de adyacencia
-    Graph<int> listaAdj;                // Grafo (lista de adyacencia)
+    vector<vector<int>> matrizAdj;    // Matriz de adyacencia (externa)
+    Graph<int> listaAdj;              // Lista de adyacencia (interna, grafo)
 
     // Cargar el grafo (esto solicita al usuario los m pares de nodos)
-    // Puedes llamar al método como es ahora no siendo estático:
     listaAdj.loadGraph(n, m, matrizAdj);
 
     // Mostrar la matriz de adyacencia
@@ -33,14 +32,14 @@ int main() {
 
     // Realizar recorrido BFS
     int nodoInicial;
-    cout << "Ingrese el nodo inicial para hacer los recorridos (0-indexado): ";
+    cout << "Ingrese el índice inicial para hacer los recorridos (0-indexado): ";
     cin >> nodoInicial;
     
     cout << "\n";
-    cout << "Matriz de adyacencia:" << endl;
-    listaAdj.BFS(matrizAdj, nodoInicial);
-    listaAdj.DFS(matrizAdj, nodoInicial);
-    cout << "Lista de adyacencia:" << endl;
+    cout << "Recorridos con Matríz O(V^2)" << endl;
+    listaAdj.bfs_matrix(matrizAdj, nodoInicial);
+    listaAdj.dfs_matrix(matrizAdj, nodoInicial);
+    cout << "Recorridos con Lista O(V+E)" << endl;
     listaAdj.dfs(nodoInicial);
     listaAdj.bfs(nodoInicial);
 
