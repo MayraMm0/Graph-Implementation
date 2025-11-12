@@ -11,20 +11,10 @@ int main() {
     cout << "Introduce el numero de aristas (m): ";
     cin >> m;
 
-    vector<vector<int>> matrizAdj;    // Matriz de adyacencia (externa)
     Graph<int> listaAdj;              // Lista de adyacencia (interna, grafo)
 
-    // Cargar el grafo (esto solicita al usuario los m pares de nodos)
-    listaAdj.loadGraph(n, m, matrizAdj);
-
-    // Mostrar la matriz de adyacencia
-    cout << "Matriz de adyacencia:" << endl;
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            cout << matrizAdj[i][j] << " ";
-        }
-        cout << endl;
-    }
+    // Cargar el grafo
+    listaAdj.loadGraph(n, m);
 
     // Mostrar la lista de adyacencia (usando el operador sobrecargado)
     cout << "\nLista de adyacencia (Graph):" << endl;
@@ -34,15 +24,16 @@ int main() {
     int nodoInicial;
     cout << "Ingrese el índice inicial para hacer los recorridos (0-indexado): ";
     cin >> nodoInicial;
-    
-    cout << "\n";
-    cout << "Recorridos con Matríz O(V^2)" << endl;
-    listaAdj.bfs_matrix(matrizAdj, nodoInicial);
-    listaAdj.dfs_matrix(matrizAdj, nodoInicial);
+
     cout << "Recorridos con Lista O(V+E)" << endl;
     listaAdj.dfs(nodoInicial);
     listaAdj.bfs(nodoInicial);
 
+    cout << "Ordenamiento Topologico: " << endl;
+    //vector<int> topo = listaAdj.topologicalSort();
+    for (const auto& i: listaAdj.topologicalSort()){
+
+    }
 
     return 0;
 }

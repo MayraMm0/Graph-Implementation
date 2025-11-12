@@ -12,14 +12,32 @@ using namespace std;
 template <typename T>
 class Graph{
 private:
-    // Adjacency list representation
+    // Adjacency list representation (Directed)
     unordered_map<T, unordered_set<T>> adjList;
 
-    //Auxiliary structures for Matrix indexing
-    // Maps T type to a fixed int index (id)
-    unordered_map<T, int> vertexToId;
-    // Maps int index back to T type
-    vector<T> idToVertex;
+    // --- HELPER METHOD FOR COUNTING IN-DEGREE ---
+    // Calculates the in-degree (number of incoming edges) for every node.
+    // Time Complexity: O(V + E)
+    unordered_map<T, int> calculateInDegree() const {
+        unordered_map<T, int> inDegree;
+
+        // 1. Initialize in-degree for all vertices to zero.
+        for (const auto& pair : adjList) {
+            inDegree[pair.first] = 0;
+        }
+
+        // 2. Iterate through every edge (u -> v) to count incoming edges to v.
+        for (const auto& pair : adjList) {
+            // 'pair.first' is the source (u)
+            // 'pair.second' is the set of neighbors (destinations v)
+            for (const T& neighbor : pair.second) {
+                // Increment degree
+                ++inDegree[neighbor];
+            }
+        }
+        return inDegree;
+    }
+
 
 public:
     // --- CONSTRUCTOR ---
@@ -27,37 +45,30 @@ public:
 
     // --- INSERTION METHODS ---
     // Add vertex. This method adds a vertex to the graph, with no connections.
-    // It also assigns it an id for matrix use
     bool addVertex(T vertex){
         if(!adjList.contains(vertex)){ // Avoids duplicate elements
             adjList[vertex];
-
-            int newId = idToVertex.size();
-            vertexToId[vertex] = newId;
-            idToVertex.push_back(vertex);
             return true;
         }
-
         return false;
     }
 
     // Add edge. This method creates a connection between two existing vertices.
+    // THE GRAPH IS DIRECTED "vertex1 -> vertex2"
     bool addEdge(T vertex1, T vertex2) {
         if (adjList.contains(vertex1) && adjList.contains(vertex2)) {
             adjList.at(vertex1).insert(vertex2); // Adds vertex 2 to the set of connections of vertex 1
-            adjList.at(vertex2).insert(vertex1); // Adds vertex 1 to the set of connections of vertex 2
             return true;
         }
         return false;
     }
 
     // --- DELETION METHODS ---
-    // Remove edge. Removes an existing edge between two vertices
+    // Remove edge. Removes an existing edge from vertex1 -> vertex2
     // List O(1)
     bool removeEdge(T vertex1, T vertex2) {
         if (adjList.contains(vertex1) && adjList.contains(vertex2)) {
             adjList.at(vertex1).erase(vertex2);
-            adjList.at(vertex2).erase(vertex1);
             return true;
         }
         return false;
@@ -80,11 +91,10 @@ public:
 
     // --- TRAVERSAL METHODS ---
     // Breadth First Search (Level by Level)
-
     // Adjacency List bfs O(V+E)
     void bfs(const T& startNode) {
         if (!adjList.contains(startNode)) {
-            cout << "Error: Start node not found in graph." << endl;
+            cout << "Error: Nodo no encontrado." << endl;
             return;
         }
 
@@ -96,7 +106,7 @@ public:
         Q.push(startNode);
         visited.insert(startNode);
 
-        cout << "BFS list traversal starting from " << startNode << ": ";
+        cout << "BFS traversal empezando de " << startNode << ": ";
 
         while (!Q.empty()) {
             // 3. Dequeue the current node (FIFO)
@@ -118,46 +128,11 @@ public:
         cout << endl;
     }
 
-    // Adjacency Matrix bfs O(V^2)
-    void bfs_matrix(const vector<vector<int>>& matrizAdj, int startId) {
-        int n = matrizAdj.size();
-        vector<bool> visitados(n, false);
-        queue<int> cola;
-
-        if (startId < 0 || startId >= n) {
-            cout << "Error: El nodo inicial " << startId << " no es válido." << endl;
-            return;
-        }
-
-        visitados[startId] = true;
-        cola.push(startId);
-        cout << "Recorrido BFS desde el nodo " << idToVertex.at(startId) << ": ";
-
-        while (!cola.empty()) {
-            int currentId = cola.front();
-            cola.pop();
-            cout << idToVertex.at(currentId) << " ";
-
-            for (int vecino = 0; vecino < n; vecino++) {
-                if (matrizAdj[currentId][vecino] == 1 && !visitados[vecino]) {
-                    visitados[vecino] = true;
-                    cola.push(vecino);
-                }
-            }
-
-            if (!cola.empty()) {
-                cout << " ";
-            }
-        }
-        cout << endl;
-    }
-
     // Depth-First Search (Complete paths)
-
     // Adjacency List dfs O(V+E)
     void dfs(const T& startNode) {
         if (!adjList.contains(startNode)) {
-            cout << "Error: Start node not found in graph." << endl;
+            cout << "Error: Nodo no encontrado." << endl;
             return;
         }
 
@@ -169,7 +144,7 @@ public:
         S.push(startNode);
         visited.insert(startNode);
 
-        cout << "DFS list traversal starting from " << startNode << ": ";
+        cout << "DFS traversal empezando de " << startNode << ": ";
 
         while (!S.empty()) {
             // 3. Pop the current node (LIFO)
@@ -191,81 +166,87 @@ public:
         cout << endl;
     }
 
-    // Adjacency Matrix dfs O(V^2)
-    void dfs_matrix(const vector<vector<int>>& matrizAdj, int startId) {
-        int n = matrizAdj.size();
-        vector<bool> visitados(n, false);
-        stack<int> pila;
+    // --- TOPOLOGICAL SORT (KAHN'S ALGORITHM) ---
+    // O(V + E)
+    vector<T> topologicalSort() const {
+        // 1. Calculate in-degree for all vertices (using helper method)
+        unordered_map<T, int> inDegree = calculateInDegree();
 
-        if (startId < 0 || startId >= n) {
-            cout << "Error: El nodo inicial " << startId << " no es válido." << endl;
-            return;
+        // 2. Initialize Queue and result vector
+        queue<T> Q;
+        vector<T> topologicalOrder;
+
+        // 3. Final all vertices with an in-degree of 0 and add them to queue
+        for (const auto& pair : inDegree){
+            if (pair.second == 0){
+                Q.push(pair.first);
+            }
         }
 
-        cout << "Recorrido DFS desde el nodo " << startId << ": ";
-        pila.push(startId);
-        bool esPrimerNodo = true;
+        // 4. Process the queue until empty
+        while (!Q.empty()){
+            // Dequeue current
+            T current = Q.front();
+            Q.pop();
 
-        while (!pila.empty()) {
-            int currentId = pila.top();
-            pila.pop();
+            // Add current to topological order list
+            topologicalOrder.push_back(current);
 
-            if (!visitados[currentId]) {
-                visitados[currentId] = true;
+            // 5. Iterate through all neighbors of current
+            for (const T& neighbor : adjList[current]){
+                // Decrement the in-degree of neighbor
+                --inDegree[neighbor];
 
-                if (!esPrimerNodo) {
-                    cout << " ";
-                }
-                esPrimerNodo = false;
-                cout << idToVertex.at(currentId) << " ";
-
-                for (int vecino = n - 1; vecino >= 0; vecino--) {
-                    if (matrizAdj[currentId][vecino] == 1 && !visitados[vecino]) {
-                        pila.push(vecino);
-                    }
+                // 6. If neighbors in-degree is now 0, enqueue
+                if (inDegree[neighbor] == 0){
+                    Q.push(neighbor);
                 }
             }
         }
-        cout << endl;
+
+        // 7. Check if graph is not DAG
+        // If num of nodes in topological order is less than total
+        // num of nodes in graph -> there is a cycle (not DAG)
+        if (topologicalOrder.size() != adjList.size()){
+            cerr << "Error: El grafo contiene un ciclo (No es DAG). " << endl;
+            return{};
+        }
+
+        return topologicalOrder;
     }
 
     // --- LOAD METHOD ---
-    // Loads the graph edges into the Adjacency Matrix (external ref)
-    // and the Adjacency List (internal member).
-    // Input: n (number of vertices), m (number of edges), matrizAdj (matrix by ref)
-    void loadGraph(int n, int m, vector<vector<int>>& matrizAdj) {
+    // Loads the graph edges into the Adjacency List (internal member).
+    // Input: n (number of vertices) and m (number of edges).
+    void loadGraph(int n, int m) {
         // Clear previous data
         adjList.clear();
-        idToVertex.clear();
-        vertexToId.clear();
 
-        // 1. Initialize external Adj Matrix
-        matrizAdj.assign(n, vector<int>(n, 0));
-
+        cout << "Ingresa " << n << " vertices, separados por espacios:\n";
+        // 1. Read N vertices and add them to the graph.
         for (int i = 0; i < n; ++i) {
-            addVertex(static_cast<T>(i)); // This also updates the internal ID maps
+            T vertex;
+            if (!(cin >> vertex)) {
+                cerr << "Error leyendo input para vertices." << endl;
+                return;
+            }
+            addVertex(vertex);
         }
 
-        cout << "Ingrese " << m << " aristas, cada una como dos enteros (u v) separados por espacio (0-indexados):\n";
+        cout << "Ingresa " << m << " aristas, como dos vertices (u v) de tipo T:\n";
+        // 2. Read M edges and add them to the graph.
         for (int i = 0; i < m; ++i) {
-            int u_id, v_id;
-            cin >> u_id >> v_id;
-
-            if (u_id < 0 || u_id >= n || v_id < 0 || v_id >= n) {
-                cout << "Error: arista inválida (" << u_id << " " << v_id << ") ignorada." << endl;
-                continue;
+            T u_vertex, v_vertex;
+            if (!(cin >> u_vertex >> v_vertex)) {
+                cerr << "Error leyendo input para aristas." << endl;
+                return;
             }
 
-            // Get T values corresponding to the read IDs
-            T u_vertex = idToVertex.at(u_id);
-            T v_vertex = idToVertex.at(v_id);
-
-            // Update Adj Matrix (external)
-            matrizAdj[u_id][v_id] = 1;
-            matrizAdj[v_id][u_id] = 1;
-
-            // Update adj list (internal)
-            addEdge(u_vertex, v_vertex);
+            // The addEdge method handles checking if vertices exist.
+            if (!addEdge(u_vertex, v_vertex)) {
+                // Inform the user if the vertices weren't part of the initial N.
+                cout << "Advertencia: Arista (" << u_vertex << ", " << v_vertex << ") ignorada" << endl;
+            }
         }
     }
 
