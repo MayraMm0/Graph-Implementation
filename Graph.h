@@ -193,7 +193,7 @@ public:
             topologicalOrder.push_back(current);
 
             // 5. Iterate through all neighbors of current
-            for (const T& neighbor : adjList[current]){
+            for (const T& neighbor : adjList.at(current)){
                 // Decrement the in-degree of neighbor
                 --inDegree[neighbor];
 

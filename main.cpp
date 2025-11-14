@@ -4,6 +4,20 @@
 #include <vector>
 using namespace std;
 
+// --- HELPER METHOD print oder ---
+template <typename T>
+void printTopologicalOrder(const vector<T>& order) {
+    if (order.empty()) {
+        cout << "Ordenamiento topológico: No es posible (Ciclo detectado)." << endl;
+    } else {
+        cout << "Ordenamiento topológico (Kahn's):" << endl;
+        for (const T& node : order) {
+            cout << node << " -> ";
+        }
+        cout << "END" << endl;
+    }
+}
+
 int main() {
     int n, m;
     cout << "Introduce el numero de vetices (n): ";
@@ -30,10 +44,8 @@ int main() {
     listaAdj.bfs(nodoInicial);
 
     cout << "Ordenamiento Topologico: " << endl;
-    //vector<int> topo = listaAdj.topologicalSort();
-    for (const auto& i: listaAdj.topologicalSort()){
+    // Ejecutar Kahn's Algorithm
+    vector<int> resultOrder = listaAdj.topologicalSort();
+    printTopologicalOrder(resultOrder);
 
-    }
-
-    return 0;
 }
