@@ -10,42 +10,55 @@ void printTopologicalOrder(const vector<T>& order) {
     if (order.empty()) {
         cout << "Ordenamiento topológico: No es posible (Ciclo detectado)." << endl;
     } else {
-        cout << "Ordenamiento topológico (Kahn's):" << endl;
         for (const T& node : order) {
-            cout << node << " -> ";
+            cout << node << " ";
         }
-        cout << "END" << endl;
+        cout << endl;
     }
 }
 
 int main() {
-    int n, m;
-    cout << "Introduce el numero de vetices (n): ";
-    cin >> n;
-    cout << "Introduce el numero de aristas (m): ";
-    cin >> m;
+    Graph<int> grafo1;
+    Graph<int> grafo2;
+    Graph<int> grafo3;
+    Graph<int> grafo4;
+    // Load graphs from files first, then collect them into the vector
+    grafo1.loadFromFile("Grafo1.txt");
+    grafo2.loadFromFile("Grafo2.txt");
+    grafo3.loadFromFile("Grafo3.txt");
+    grafo4.loadFromFile("Grafo4.txt");
 
-    Graph<int> listaAdj;              // Lista de adyacencia (interna, grafo)
+    vector<Graph<int>> grafos = {grafo1, grafo2, grafo3, grafo4};
 
-    // Cargar el grafo
-    listaAdj.loadGraph(n, m);
+    cout << "\n=== GRAFOS CARGADOS ===" << endl;
 
-    // Mostrar la lista de adyacencia (usando el operador sobrecargado)
-    cout << "\nLista de adyacencia (Graph):" << endl;
-    cout << listaAdj << endl;
+    // iterate over all graphs in the vector
+    for (size_t i = 0; i < grafos.size(); ++i) {
+        cout << "\n=== GRAFO "<< i+1 << " ===" << endl;
 
-    // Realizar recorrido BFS
-    int nodoInicial;
-    cout << "Ingrese el índice inicial para hacer los recorridos (0-indexado): ";
-    cin >> nodoInicial;
+        cout << "\n- Lista de adjacencia -" << endl;
+        cout << grafos[i] << endl;
 
-    cout << "Recorridos con Lista O(V+E)" << endl;
-    listaAdj.dfs(nodoInicial);
-    listaAdj.bfs(nodoInicial);
+        cout << "\n- Orden Topológico -" << endl;
+        vector<int> orden = grafos[i].topologicalSort();
+        printTopologicalOrder(orden);
+        cout << endl;
 
-    cout << "Ordenamiento Topologico: " << endl;
-    // Ejecutar Kahn's Algorithm
-    vector<int> resultOrder = listaAdj.topologicalSort();
-    printTopologicalOrder(resultOrder);
+        cout << "- Verificaciones -" << endl;
+        if(grafos[i].isTree() == true){
+            cout << "Es un árbol." << endl;
+        }else{
+            cout << "No es un árbol." << endl;
+        }
+        if(grafos[i].isBipartite() == true){
+            cout << "Es bipartito." << endl;
+        }else{
+            cout << "No es bipartito." << endl;
+        }
+
+        cout << "\n";
+    }
+
+    return 0;
 
 }

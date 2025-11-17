@@ -1,4 +1,5 @@
 #pragma once
+#include <fstream>
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
@@ -217,7 +218,38 @@ public:
 
     // --- LOAD METHOD ---
     // Loads the graph edges into the Adjacency List (internal member).
-    // Input: n (number of vertices) and m (number of edges).
+
+    // From file .txt
+    bool loadGraph(istream& in){
+        int n, m;   //  Número de vétices y arcos.
+
+        //  Valída de que el archivo cuente con el formato correcto.
+        if (!(in >> n >> m)){
+            cout << "Formato invalido";
+            return false;
+        }
+
+        //  Limpia cualquier grafo previo.
+        adjList.clear();
+
+        //  Crea el número de vértices solcitados a partir de 0 a n-1.
+        for(int i = 0; i < n; i++){
+            addVertex(static_cast<T>(i));
+        }
+
+        //  Lee los 'm' arcos solicitados y realiza la unión.
+        for(int i = 0; i < m; i++){
+            int u, v;
+            in >> u >> v;   //  Lee el par de vérticea.
+            addEdge(u,v);   //  Realiza el arco con ambos vértices.
+        }
+
+        return true;
+    }
+
+
+
+    // From input: n (number of vertices) and m (number of edges).
     void loadGraph(int n, int m) {
         // Clear previous data
         adjList.clear();
@@ -248,6 +280,121 @@ public:
                 cout << "Advertencia: Arista (" << u_vertex << ", " << v_vertex << ") ignorada" << endl;
             }
         }
+    }
+
+    // --- METODO PARA VERIFICAR SI ES ÁRBOL --- O(V + E)
+    // Criterio 1: Debe tener una única raíz (Un nodo con inDegree de 0)
+    // Criterio 2: Debe tener V-1 aristas
+    // Criterio 2: Todos los demás nodos pueden ser accedidos desde la raíz
+    // Critetio 3: Debe ser DAG (sin ciclos)
+    bool isTree() const{
+        //  1. Calculate inDegree of every node
+        unordered_map<T,int> inDegree = calculateInDegree();
+
+        //  2. Search for non dependent nodes (degree : 0)
+        T root;
+        int rootCount = 0;
+        for(const auto& pair : inDegree){
+            if(pair.second == 0){
+                root = pair.first;
+                rootCount++;
+            }
+        }
+
+        //  3. Check there is a unique root
+        if(rootCount != 1){
+            return false;
+        }
+
+        // 4. Check connectivity with BFS from root
+        unordered_set<T> visited;
+        queue<T> Q;
+
+        Q.push(root);
+        visited.insert(root);
+
+        while(!Q.empty()){
+            T current = Q.front();
+            Q.pop();
+
+            // Recorre los vecinos.
+            for(const T& neighboor : adjList.at(current)){
+                if(!visited.contains(neighboor)){
+                    visited.insert(neighboor);
+                    Q.push(neighboor);
+                }
+            }
+        }
+
+        //  4. Check all nodes are accesible from root
+        if(topologicalSort().empty()){
+            return false;
+        }
+
+        return true;
+    }
+
+
+    // --- BIPARTITE CHECK (TWO-COLORING ALGORITHM) ---
+    // Un grafo es bipartito si no contiene ciclos primos
+    // Se maneja asignando "colores" o sets
+    // O(V + E)
+    bool isBipartite() const {
+        // 1. Initialize a map to store the color/set ID for each vertex.
+        // 0: Uncolored/Unvisited, 1: Set U, 2: Set V
+        unordered_map<T, int> color;
+        for (const auto& pair : adjList) {
+            color[pair.first] = 0; // Initialize all vertices as uncolored
+        }
+
+        // 2. Use BFS approach, but we must iterate through all vertices to handle potentially disconnected components.
+        for (const auto& startPair : adjList) {
+            T startNode = startPair.first;
+
+            // If the component has not yet been colored, start a new BFS/coloring process.
+            if (color[startNode] == 0) {
+                queue<T> Q;
+                Q.push(startNode);
+                color[startNode] = 1; // Start coloring the current component with Set U (color 1)
+
+                while (!Q.empty()) {
+                    T u = Q.front();
+                    Q.pop();
+
+                    // 3. Check all neighbors (v) of the current node (u).
+                    for (const T& v : adjList.at(u)) {
+                        // If neighbor (v) is uncolored, color it with the opposite color and enqueue.
+                        if (color[v] == 0) {
+                            // Si u es de color 1, asigna a v 2. Si u NO es de color 1, asigna 1
+                            color[v] = (color[u] == 1) ? 2 : 1;
+                            Q.push(v);
+                        }
+                        // If neighbor (v) is already colored and has the SAME color as u,
+                        // an odd cycle exists
+                        else if (color[v] == color[u]) {
+                            return false; // Not Bipartite
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. If the coloring process completes without conflicts, the graph is bipartite.
+        return true;
+    }
+
+    // --- LOAD FROM FILE ---
+    bool loadFromFile(const string& filename){
+        ifstream file(filename);    //  Se abre el archivo.
+
+        //  Valida si el archivo se pudo abrir.
+        if(!file.is_open()){
+            cerr << "No se puedo abrir el archivo.";
+            return false;
+        }
+
+        //  Manda a llamar a 'loadGraph' para crear el grafo con la información del archivo.
+        return loadGraph(file);
     }
 
 
